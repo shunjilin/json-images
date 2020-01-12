@@ -6,7 +6,7 @@ Allows for caching downloaded images to prevent duplicate downloads.
 
 ## Install
 ```
-npm run install
+npm install
 ```
 
 ## Usage
