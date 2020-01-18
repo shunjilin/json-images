@@ -2,7 +2,7 @@
 
 Simple script to parse JSON from URL and download jpg images (on any JSON leaf nodes).
 
-Allows for caching downloaded images to prevent duplicate downloads.
+Also generates a json file that maps url to the generated image names
 
 ## Install
 ```
@@ -16,19 +16,27 @@ npm start -- --help
 
 ## Run
 ```
-npm start -- --url <url> --output <output file directory> --cache <cache json file>
+// get images from url
+npm start -- --url <url>
+//e.g.
+npm start -- --url https://my-site.com/json-endpoint
 
+// optional arguments for output image directory and map name
+npm start -- url <url> --output <output file directory name> --map <map json file name>
 // e.g.
-npm start -- --url https://my-site.com/json-endpoint --output ./assets/images --cache ./src/cache.json
+npm start -- --url https://my-site.com/json-endpoint --output myimages --map mymap.json
 ```
+If no optional arguments given,
+- Default output images directory: ./output
+- Default map json file: ./map.json
 
-## Cache Json File
-cache json file should be of the format  - url : filepath, e.g.:
+## Map Json File
+map json file will be of the format  - url : filename, e.g.:
 ```
-// cache.json
+// map.json
 {
-    'https://my-site.com/image1.jpg' : './assets/images/image1.jpg',
-    'https://my-site.com/image2.jpg' : './assets/images/image2.jpg'
+    'https://my-site.com/image1.jpg' : 'image1.jpg',
+    'https://my-site.com/image2.jpg' : 'image2.jpg'
 }
 
 ```

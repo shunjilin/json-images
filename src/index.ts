@@ -3,12 +3,12 @@ import fs from 'fs';
 import program from 'commander';
 import path from 'path';
 
-program.version('0.0.1');
+program.version('0.1.0');
 
 program
     .requiredOption('--url <url>', 'json url')
-    .requiredOption('--output <output>', 'image output directory filepath, directory will be created if not exist')
-    .requiredOption('--cache <cache>', 'cache filepath, stores json object mapping from url to image filepath; file will be created if not exist')
+    .option('--output <output>', 'image output directory filepath')
+    .option('--map <cache>', 'json file that maps image url to image filename')
 
 interface JsonObject {
     [key: string]: JsonObject | string
@@ -35,11 +35,8 @@ const collectImageUrls = (jsonObject: JsonObject | string, resultArray: string[]
     }
 }
 
-// return json object from json file
-const getJsonObjectFromJsonFile = (filePath: string): JsonObject => JSON.parse(fs.readFileSync(filePath).toString())
-
 // create empty json file
-const createJsonFile = (filePath: string) => {
+const createJsonFile = (filePath: string, jsonObject: JsonObject) => {
     const directoryName = path.dirname(filePath)
     // create directory if not exist
     if (!fs.existsSync(directoryName)) {
@@ -47,30 +44,36 @@ const createJsonFile = (filePath: string) => {
 
     }
     // create empty json file
-    fs.writeFileSync(filePath, JSON.stringify({}))
+    fs.writeFileSync(filePath, JSON.stringify(jsonObject, null, 2))
 }
 
-// append key value pair to json file
-const appendKeyValueToJsonFile = (filePath: string, key: string, value: string) => {
-    const json = JSON.parse(fs.readFileSync(filePath).toString())
-    json[key] = value;
-    fs.writeFileSync(filePath, JSON.stringify(json))
+// remove all files in directory
+const removeFilesInDirectory = (dirPath: string) => {
+    const files = fs.readdirSync(dirPath);
+    for (const file of files) {
+        fs.unlinkSync(path.join(dirPath, file))
+    }
 }
 
 const main = async () => {
     // get user input
     program.parse(process.argv)
     const url = program.url
-    const imageOutputDirFilepath = program.output
-    const cacheFilepath = program.cache
+    const imageOutputDirFilepath = program.output || 'images'
+    const mapFilePath = program.cache || 'map.json'
 
-    // create cache json file if not exist
-    if (!fs.existsSync(cacheFilepath)) {
-        createJsonFile(cacheFilepath)
+    // remove file if exist
+    if (fs.existsSync(mapFilePath)) {
+        fs.unlinkSync(mapFilePath) // delete file   
     }
 
-    // create image output directory if not exist
-    if (!fs.existsSync(imageOutputDirFilepath)) {
+    // clear output folder if exists
+    if (fs.existsSync(imageOutputDirFilepath)) {
+        if (!fs.lstatSync(imageOutputDirFilepath).isDirectory()) {
+            throw new Error(`Output directory ${imageOutputDirFilepath} exists, but is not a folder`)
+        }
+        removeFilesInDirectory(imageOutputDirFilepath)
+    } else {  // create image output directory if not exist
         fs.mkdirSync(imageOutputDirFilepath, { recursive: true })
     }
 
@@ -78,25 +81,26 @@ const main = async () => {
     const json = await fetchJsonFromUrl(url)
 
     // collect image urls
-    const resultUrls: string[] = [];
+    let resultUrls: string[] = [];
     collectImageUrls(json, resultUrls);
+    // remove duplicates
+    resultUrls = Array.from(new Set(resultUrls))
 
-    // get cached urls (prevent downloading again)
-    const cacheJsonObject = getJsonObjectFromJsonFile(cacheFilepath)
-    const cachedKeys = Object.keys(cacheJsonObject)
-
-    // download image if not cached
-    resultUrls.forEach(async url => {
-        if (!cachedKeys.includes(url)) { // not cached
+    const cacheJsonObject: JsonObject = {}
+    // downloads images asynchronously
+    await Promise.all(resultUrls.map(async url => {
+        if (!cacheJsonObject[url]) { // if not downloaded
             // generate random string
             const outputImageFilePath = path.join(imageOutputDirFilepath, getRandomString() + '.jpg')
             const urlImage = await fetch(url)
             const outputImage = fs.createWriteStream(outputImageFilePath)
             urlImage.body.pipe(outputImage) // write image
-            // update cache json file
-            appendKeyValueToJsonFile(cacheFilepath, url, outputImageFilePath)
+            cacheJsonObject[url] = outputImageFilePath // add to cache
         }
-    })
+    }))
+
+    // create cache file
+    createJsonFile(mapFilePath, cacheJsonObject)
 }
 
 (async () => main())()
