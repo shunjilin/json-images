@@ -22,10 +22,11 @@ const fetchJsonFromUrl = async (url: string): Promise<JsonObject> => {
 // random string identifier
 const getRandomString = () => Math.random().toString(36).substr(2, 9)
 
-// given a json object and result array, collect all jpg image url in result array
+// given a json object and result array, collect all jpg/jpeg/png image url in result array
 const collectImageUrls = (jsonObject: JsonObject | string, resultArray: string[]) => {
     if (typeof jsonObject === 'string') {
-        if (jsonObject.startsWith('https://') && jsonObject.endsWith('.jpg')) {
+        if (jsonObject.startsWith('https://') && 
+        (jsonObject.endsWith('.jpg') || jsonObject.endsWith('.jpeg') || jsonObject.endsWith('.png'))) {
             resultArray.push(jsonObject)
         }
     } else { // recursively traverse
