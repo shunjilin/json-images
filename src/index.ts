@@ -5,10 +5,7 @@ import path from 'path';
 
 program.version('0.1.0');
 
-program
-    .requiredOption('--url <url>', 'json url')
-    .option('--output <output>', 'image output directory filepath')
-    .option('--map <cache>', 'json file that maps image url to image filename')
+program.requiredOption('--url <url>', 'json url')
 
 interface JsonObject {
     [key: string]: JsonObject | string
@@ -60,8 +57,8 @@ const main = async () => {
     // get user input
     program.parse(process.argv)
     const url = program.url
-    const imageOutputDirFilepath = program.output || 'images'
-    const mapFilePath = program.cache || 'map.json'
+    const imageOutputDirFilepath =  './generated/images'
+    const mapFilePath =  './generated/map.json'
 
     // remove file if exist
     if (fs.existsSync(mapFilePath)) {
