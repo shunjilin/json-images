@@ -17,12 +17,18 @@ npm start -- --help
 ## Run
 ```
 npm start -- --url <url>
-//e.g.
+// e.g.
 npm start -- --url https://my-site.com/json-endpoint
+
+// with optional arguments
+// e.g.
+npm start -- --url https://my-site.com/json-endpoint --output my_images --map my_map.json
 ```
 ## Output
 - images directory: ./generated/output
 - map json file: ./generated/map.json
+
+If optional output or map argument provided, custom directory/file names under ./generated will be used instead.
 
 ## Map Json File
 map json file will be of the format  - url : filename, e.g.:

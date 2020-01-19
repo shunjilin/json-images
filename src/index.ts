@@ -5,7 +5,10 @@ import path from 'path';
 
 program.version('0.1.0');
 
-program.requiredOption('--url <url>', 'json url')
+program
+    .requiredOption('--url <url>', 'json url')
+    .option('--output <output>', 'directory name for output images')
+    .option('--map <map>', 'file name for map json file')
 
 interface JsonObject {
     [key: string]: JsonObject | string
@@ -22,8 +25,8 @@ const getRandomString = () => Math.random().toString(36).substr(2, 9)
 // given a json object and result array, collect all jpg/jpeg/png image url in result array
 const collectImageUrls = (jsonObject: JsonObject | string, resultArray: string[]) => {
     if (typeof jsonObject === 'string') {
-        if (jsonObject.startsWith('https://') && 
-        (jsonObject.endsWith('.jpg') || jsonObject.endsWith('.jpeg') || jsonObject.endsWith('.png'))) {
+        if (jsonObject.startsWith('https://') &&
+            (jsonObject.endsWith('.jpg') || jsonObject.endsWith('.jpeg') || jsonObject.endsWith('.png'))) {
             resultArray.push(jsonObject)
         }
     } else { // recursively traverse
@@ -56,9 +59,12 @@ const removeFilesInDirectory = (dirPath: string) => {
 const main = async () => {
     // get user input
     program.parse(process.argv)
+    const generatedDir = './generated'
     const url = program.url
-    const imageOutputDirFilepath =  './generated/images'
-    const mapFilePath =  './generated/map.json'
+    const imageOutputDirFilepath = program.output ?
+        path.join(generatedDir, program.output) : path.join(generatedDir, 'images')
+    const mapFilePath = program.map ?
+        path.join(generatedDir, program.map) : path.join(generatedDir, 'map.json')
 
     // remove file if exist
     if (fs.existsSync(mapFilePath)) {
