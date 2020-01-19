@@ -1,6 +1,6 @@
 # Parse JSON and download image data
 
-Simple script to parse JSON from URL and download jpg/jpeg/png images (on any JSON leaf nodes).
+Simple script to parse JSON from URL and download jpg/jpeg/png/gif images (on any JSON leaf nodes).
 
 Also generates a json file that maps url to the generated image names.
 
