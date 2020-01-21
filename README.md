@@ -22,12 +22,12 @@ npm start -- --url https://my-site.com/json-endpoint
 
 // with optional arguments
 // e.g.
-npm start -- --url https://my-site.com/json-endpoint --output my_images --map my_map.json --source my_source.json
+npm start -- --url https://my-site.com/json-endpoint --output my_images --map my_map.json --json_endpoint my_json_endpoint.json
 ```
 ## Output
 - images directory: ./generated/output
 - map json file: ./generated/map.json
-- output of source (url) json: ./generated/source.json
+- json endpoint file (download entire url as json file): ./generated/json_endpoint.json
 
 If optional output or map argument provided, custom directory/file names under ./generated will be used instead.
 

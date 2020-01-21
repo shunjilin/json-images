@@ -9,7 +9,10 @@ program
   .requiredOption("--url <url>", "json url")
   .option("--output <output>", "directory name for output images")
   .option("--map <map>", "file name for map json file")
-  .option("--source <source>", "file name to save url json source");
+  .option(
+    "--json_endpoint <json_endpoint>",
+    "file name to save url json endpoint"
+  );
 
 interface JsonObject {
   [key: string]: JsonObject | string;
@@ -26,27 +29,23 @@ const getRandomString = () =>
     .toString(36)
     .substr(2, 9);
 
-// given a json object and result array, collect all jpg/jpeg/png/gif image url in result array
-const collectImageUrls = (
-  jsonObject: JsonObject | string,
-  resultArray: string[]
-) => {
-  if (typeof jsonObject === "string") {
-    if (
-      jsonObject.startsWith("https://") &&
-      (jsonObject.endsWith(".jpg") ||
-        jsonObject.endsWith(".jpeg") ||
-        jsonObject.endsWith(".png") ||
-        jsonObject.endsWith(".gif"))
-    ) {
-      resultArray.push(jsonObject);
+// given a json object, collect all jpg/jpeg/png/gif image url and return them
+const collectImageUrls = (jsonObject: JsonObject | string): string[] => {
+  const isImageUrlRegex = /^https:\/\/.*\.(?:jpg|jpeg|gif|png)$/;
+  const nodes = [jsonObject];
+  const resultUrls: string[] = [];
+  // breadth first search
+  while (nodes.length !== 0) {
+    const currentNode = nodes.shift();
+    if (typeof currentNode === "string" && isImageUrlRegex.test(currentNode)) {
+      resultUrls.push(currentNode);
+    } else if (typeof currentNode === "object") {
+      Object.values(currentNode).forEach(node => {
+        nodes.push(node);
+      });
     }
-  } else {
-    // recursively traverse
-    Object.values(jsonObject).forEach(node => {
-      collectImageUrls(node, resultArray);
-    });
   }
+  return resultUrls;
 };
 
 // create empty json file
@@ -79,9 +78,9 @@ const main = async () => {
   const mapFilePath = program.map
     ? path.join(generatedDir, program.map)
     : path.join(generatedDir, "map.json");
-  const sourceFilePath = program.source
-    ? path.join(generatedDir, program.source)
-    : path.join(generatedDir, "source.json");
+  const jsonEndpointFilePath = program.json_endpoint
+    ? path.join(generatedDir, program.json_endpoint)
+    : path.join(generatedDir, "json_endpoint.json");
 
   // remove file if exist
   if (fs.existsSync(mapFilePath)) {
@@ -103,13 +102,10 @@ const main = async () => {
 
   // fetch json data from url
   const sourceJson = await fetchJsonFromUrl(url);
-  createJsonFile(sourceFilePath, sourceJson);
+  createJsonFile(jsonEndpointFilePath, sourceJson);
 
-  // collect image urls
-  let resultUrls: string[] = [];
-  collectImageUrls(sourceJson, resultUrls);
-  // remove duplicates
-  resultUrls = Array.from(new Set(resultUrls));
+  // collect image urls, remove duplicates
+  const resultUrls = Array.from(new Set(collectImageUrls(sourceJson)));
 
   const cacheJsonObject: JsonObject = {};
   // downloads images asynchronously
